@@ -44,10 +44,16 @@ class ChatServer {
             this.handleNewClient(socketSender, inforSender);
         });
 
-        socketSender.on("message", (messageSender) => {
-            this.handleMessage(messageSender);
+        socketSender.on("message", (messageInfo) => {
+            this.handleMessage(messageInfo);
         });
-        ~socketSender.on("disconnect", () => {
+
+        socketSender.on("notifyPush", (usernameReceipts) => {
+            this.handlePushNotify(usernameReceipts);
+        });
+
+
+        socketSender.on("disconnect", () => {
             this.handleDisconnect(socketSender);
         });
         });
@@ -63,18 +69,28 @@ class ChatServer {
         console.log(`New connect username: ${inforSender.username}`);
     }
 
-    handleMessage(messageSender) {
-        const usernameReceivers = ['abc', 'Marry', 'Caty'];
+    handleMessage(messageInfo) {
+        
+        const usernameReceivers = JSON.parse(messageInfo).usernameReceivers;
+        const messageObject = JSON.parse(messageInfo).messageObject; 
         
         this.connections.forEach((usernameReceiver, socketReceiver) => {
-            let messageObject = JSON.parse(messageSender); 
+            let messagePreSend =  messageObject
+            
+            if (usernameReceiver.username === messagePreSend.username) {
+                messagePreSend.typeSender = "SENDER_" + messagePreSend.typeSender;
+                socketReceiver.emit('receiveMessage', JSON.stringify(messagePreSend)); 
+            } else if (usernameReceivers.includes(messagePreSend.username)) {
+                messagePreSend.typeSender = "RECEIVER_" + messagePreSend.typeSender;
+                socketReceiver.emit('receiveMessage', JSON.stringify(messagePreSend)); 
+            }
+        });
+    }
 
-            if (usernameReceiver.username === messageObject.username) {
-                messageObject.typeSender = "SENDER_" + messageObject.typeSender;
-                socketReceiver.emit('receiveMessage', JSON.stringify(messageObject)); 
-            } else if (usernameReceivers.includes(messageObject.username)) {
-                messageObject.typeSender = "RECEIVER_" + messageObject.typeSender;
-                socketReceiver.emit('receiveMessage', JSON.stringify(messageObject)); 
+    handlePushNotify(usernameReceipts) {
+        this.connections.forEach((usernameReceiver, socketReceiver) => {
+            if (JSON.parse(usernameReceipts).usernameReceipts.includes(usernameReceiver.username)) {
+                socketReceiver.emit('receivePushNotify', JSON.stringify("You have a notification")); 
             }
         });
     }
