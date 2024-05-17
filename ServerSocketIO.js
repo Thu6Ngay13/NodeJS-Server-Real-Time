@@ -48,8 +48,8 @@ class ChatServer {
             this.handleMessage(messageInfo);
         });
 
-        socketSender.on("notifyPush", (usernameReceipts) => {
-            this.handlePushNotify(usernameReceipts);
+        socketSender.on("notifyPush", (notifyInfo) => {
+            this.handlePushNotify(notifyInfo);
         });
 
 
@@ -70,12 +70,12 @@ class ChatServer {
     }
 
     handleMessage(messageInfo) {
-        
+
         const usernameReceivers = JSON.parse(messageInfo).usernameReceivers;
         const messageObject = JSON.parse(messageInfo).messageObject; 
-        
+
         this.connections.forEach((usernameReceiver, socketReceiver) => {
-            let messagePreSend =  messageObject
+            let messagePreSend =  { ...messageObject }
             
             if (usernameReceiver.username === messagePreSend.username) {
                 messagePreSend.typeSender = "SENDER_" + messagePreSend.typeSender;
@@ -84,12 +84,17 @@ class ChatServer {
                 messagePreSend.typeSender = "RECEIVER_" + messagePreSend.typeSender;
                 socketReceiver.emit('receiveMessage', JSON.stringify(messagePreSend)); 
             }
+
         });
     }
 
-    handlePushNotify(usernameReceipts) {
+    handlePushNotify(notifyInfo) {
+        const usernameCreate = JSON.parse(notifyInfo).usernameCreate;
+        const usernameReceipts = JSON.parse(notifyInfo).usernameReceipts; 
+
         this.connections.forEach((usernameReceiver, socketReceiver) => {
-            if (JSON.parse(usernameReceipts).usernameReceipts.includes(usernameReceiver.username)) {
+            if(usernameCreate === usernameReceiver.username) {}
+            else if (usernameReceipts.includes(usernameReceiver.username)) {
                 socketReceiver.emit('receivePushNotify', JSON.stringify("You have a notification")); 
             }
         });
