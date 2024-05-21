@@ -74,16 +74,13 @@ class ChatServer {
         const usernameReceivers = JSON.parse(messageInfo).usernameReceivers;
         const messageObject = JSON.parse(messageInfo).messageObject; 
         
-        console.log(usernameReceivers)
-        console.log(messageObject.username)
-        
         this.connections.forEach((usernameReceiver, socketReceiver) => {
             let messagePreSend =  { ...messageObject }
             
             if (messagePreSend.username == usernameReceiver.username) {
                 messagePreSend.typeSender = "SENDER_" + messagePreSend.typeSender;
                 socketReceiver.emit('receiveMessage', JSON.stringify(messagePreSend)); 
-                console.log(messagePreSend.username + "|" + usernameReceiver.username)
+
             } else if (usernameReceivers.includes(usernameReceiver.username)) {
                 messagePreSend.typeSender = "RECEIVER_" + messagePreSend.typeSender;
                 socketReceiver.emit('receiveMessage', JSON.stringify(messagePreSend)); 
